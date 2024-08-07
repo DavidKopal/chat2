@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kopal Chat</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #FFF5EB;
+            color: #4A4A4A;
+        }
+        h1 {
+            color: #E67E22;
+            text-align: center;
+        }
+        #chatc {
+            border: 2px solid #E67E22;
+            border-radius: 8px;
+            height: 400px;
+            overflow-y: scroll;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: white;
+        }
+        #msgf {
+            display: flex;
+        }
+        #msgi {
+            flex-grow: 1;
+            margin-right: 10px;
+            padding: 10px;
+            border: 1px solid #E67E22;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #E67E22;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #D35400;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #userc {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #useri {
+            padding: 10px;
+            border: 1px solid #E67E22;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #FFF0E0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Noahh Chat</h1>
+    <div id="userc">
+        <input type="text" id="useri" placeholder="Enter your username">
+        <button id="jcb">Join Chat</button>
+    </div>
+    <div id="chatc"></div>
+    <form id="msgf">
+        <input type="text" id="msgi" placeholder="Type your message" disabled>
+        <button type="submit" disabled>Send</button>
+    </form>
+
+    <script>
+        const chatc = document.getElementById('chatc');
+        const msgf = document.getElementById('msgf');
+        const msgi = document.getElementById('msgi');
+        const useri = document.getElementById('useri');
+        const jcb = document.getElementById('jcb');
+
+        let username = '';
+        let socket;
+
+        jcb.addEventListener('click', () => {
+            username = useri.value.trim();
+            if (username && !['noahh', 'david', 'admin'].includes(username.toLowerCase())) {
+                document.getElementById('userc').style.display = 'none';
+                msgi.disabled = false;
+                msgf.querySelector('button').disabled = false;
+                
+                socket = new WebSocket('https://eminent-maize-sage.glitch.me/');
+
+                socket.addEventListener('open', () => {
+                    addmsg('System', 'Connected to chat');
+                    socket.send(JSON.stringify({ type: 'join', username }));
+                });
+
+                socket.addEventListener('message', (event) => {
+                    const data = JSON.parse(event.data);
+                    addmsg(data.username, data.message);
+                });
+
+                socket.addEventListener('close', () => {
+                    addmsg('System', 'Disconnected from chat');
+                });
+
+                socket.addEventListener('used', () => {
+                    addmsg('System', 'This username is in use, reload the page, please.');
+                });
+            }
+        });
+
+        msgf.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = msgi.value.trim();
+            if (message && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'message', username, message }));
+                msgi.value = '';
+            }
+        });
+
+        function addmsg(username, message) {
+            const msge = document.createElement('div');
+            msge.className = 'message';
+            msge.textContent = `${username}: ${message}`;
+            chatc.appendChild(msge);
+            chatc.scrollTop = chatc.scrollHeight;
+        }
+    </script>
+</body>
+</html>
